@@ -1,4 +1,3 @@
-use std::{fs::File, io::Write};
 use std::time::{Instant};
 use std::process::Command;
 
@@ -8,11 +7,9 @@ use rayon::prelude::*;
 mod sdf;
 use sdf::{get_normal, map, soft_shadow};
 
-use image::{GenericImageView};
-
 fn main() {
-    let width : usize = 1920;
-    let height : usize = 1080;
+    let width  = 1920;
+    let height  = 1080;
 
     let aspect_ratio = width as f32 / height as f32;
 
@@ -67,32 +64,17 @@ fn main() {
         color
 
     }).collect::<Vec<Vec3>>();
-
-    let tga_data : Vec<u8> = pixels.iter().fold(Vec::new(), |mut v, c| {
-        v.push((c.z * 255.0) as u8);
-        v.push((c.y * 255.0) as u8);
+    
+    let raw : Vec<u8> = pixels.iter().fold(Vec::new(), |mut v, c| {
         v.push((c.x * 255.0) as u8);
+        v.push((c.y * 255.0) as u8);
+        v.push((c.z * 255.0) as u8);
         v
     });
 
+    image::save_buffer("sdf.png", raw.as_slice(), width, height, image::ColorType::Rgb8).unwrap();
+    
     println!("Finished in {} ms", now.elapsed().as_millis());
 
-    let mut header : [u8; 18] = [0; 18];
-    header[2] = 2;
-    header[12] = (255 & width) as u8;
-    header[13] = (255 & (width >> 8)) as u8;
-    header[14] = (255 & height) as u8;
-    header[15] = (255 & (height >> 8)) as u8;
-    header[16] = 24;
-    header[17] = 32;
-
-    let mut file = File::create("sdf.tga").unwrap();
-    file.write_all(&header).expect("Failed to write TGA header.");
-    file.write_all(&tga_data).expect("Failed to write TGA pixels.");
-
-    let img = image::open("sdf.tga").unwrap();
-
-    Command::new("explorer").arg("sdf.tga").output().expect("Failed to open file sdf.tga from Explorer");
-    
-    img.save("sdf.png").expect("Failed to save sdf.png to disk.");
+    Command::new("explorer").arg("sdf.png").output().expect("Failed to open file sdf.png from Explorer");
 }
