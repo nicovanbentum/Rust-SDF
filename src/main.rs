@@ -8,6 +8,8 @@ use rayon::prelude::*;
 mod sdf;
 use sdf::{get_normal, map, soft_shadow};
 
+use image::{GenericImageView};
+
 fn main() {
     let width : usize = 1920;
     let height : usize = 1080;
@@ -88,5 +90,9 @@ fn main() {
     file.write_all(&header).expect("Failed to write TGA header.");
     file.write_all(&tga_data).expect("Failed to write TGA pixels.");
 
+    let img = image::open("sdf.tga").unwrap();
+
     Command::new("explorer").arg("sdf.tga").output().expect("Failed to open file sdf.tga from Explorer");
+    
+    img.save("sdf.png").expect("Failed to save sdf.png to disk.");
 }
